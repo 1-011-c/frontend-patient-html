@@ -25,7 +25,11 @@
 
     if (navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices.getUserMedia({video: true})
-        .then(stream => videoElement.srcObject = stream)
+        .then(stream => {
+          videoElement.srcObject = stream;
+          const scanner = new QrScanner(videoElement, res => console.dir(res));
+          scanner.start();
+        })
         .catch(err => console.log('stream-err: ', err));
     }
   </script>
