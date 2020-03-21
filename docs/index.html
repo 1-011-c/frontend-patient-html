@@ -70,6 +70,16 @@
     const testIdContainer = document.getElementById('test-id');
     const testHeroContainer = document.getElementById('test-hero');
 
+    const api = ky.extend({
+      hooks: {
+        beforeRequest: [
+          request => {
+            request.headers.set('Accept', 'application/json')
+          }
+        ]
+      }
+    });
+
     const pathValidator = /^\/corona-test-case\/([0-9a-z-]+)$/m;
     const scanner = new QrScanner(videoElement, res => {
       const trimmedRes = res.trim();
@@ -132,7 +142,7 @@
         return;
       }
 
-      ky.get(`${apiEndpoint}/corona-test-case/${testId}`)
+      api.get(`${apiEndpoint}/corona-test-case/${testId}`)
         .then(response => {
           if (!response.ok) {
             throw new HTTPError('Fetch error:', response.statusText);
