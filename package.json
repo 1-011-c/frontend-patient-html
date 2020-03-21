@@ -1,0 +1,26 @@
+{
+  "name": "frontend-patient-html",
+  "version": "1.0.0",
+  "description": "Einfache HTML-Seite für Anwender ohne Zugriff auf native App.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm i && browser-sync start --server src --files src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1-011-c/frontend-patient-html.git"
+  },
+  "keywords": [
+    "wirvsvirushackathon"
+  ],
+  "author": "Florian Breisch <florian.breisch@mindkeeper.solutions>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/1-011-c/frontend-patient-html/issues"
+  },
+  "homepage": "https://github.com/1-011-c/frontend-patient-html#readme",
+  "devDependencies": {
+    "browser-sync": "^2.26.7"
+  }
+}
