@@ -17,6 +17,15 @@
     const headlineElement = document.getElementById('headline');
     var scans = 0;
 
+    const escapeHtml = unsafe => {
+        return unsafe
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+     }
+
     (async () => {
       const parsed = await ky('https://jsonplaceholder.typicode.com/todos/1').json();
 
@@ -28,7 +37,7 @@
       navigator.mediaDevices.getUserMedia({video: true})
         .then(stream => {
           videoElement.srcObject = stream;
-          const scanner = new QrScanner(videoElement, res => headline.textContent = `Scan #${scans++}: ${escape(res)}`);
+          const scanner = new QrScanner(videoElement, res => headline.innerText = `Scan #${scans++}: ${escapeHtml(res)}`);
           scanner.start();
         })
         .catch(err => console.log('stream-err: ', err));
