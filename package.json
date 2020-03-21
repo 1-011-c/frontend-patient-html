@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npm i && browser-sync start --server src --files src"
+    "start": "npm i && cp node_modules/qr-scanner/*.min.js src/ && browser-sync start --server src --files src"
   },
   "repository": {
     "type": "git",
@@ -21,6 +21,8 @@
   },
   "homepage": "https://github.com/1-011-c/frontend-patient-html#readme",
   "devDependencies": {
-    "browser-sync": "^2.26.7"
-  }
+    "browser-sync": "^2.26.7",
+    "qr-scanner": "^1.1.1"
+  },
+  "dependencies": {}
 }

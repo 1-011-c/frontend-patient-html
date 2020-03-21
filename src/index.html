@@ -4,10 +4,25 @@
   <meta charset="utf-8">
   <title></title>
   <link href="style.css" rel="stylesheet" />
+
 </head>
 <body>
+  <h1>Scan</h1>
+  <video id="video-canvas"></video>
+  <script type="module">
+    import ky from 'https://cdn.jsdelivr.net/npm/ky@latest/index.js';
+    import QrScanner from './qr-scanner.min.js';
 
-  <script>
+    const videoCanvas = document.getElementById('video-canvas');
+    const qrScanner = new QrScanner(videoCanvas, res => console.log('qr code: ', res));
+
+    (async () => {
+      const parsed = await ky('https://jsonplaceholder.typicode.com/todos/1').json();
+
+      console.log(parsed.title);
+      //=> 'delectus aut autem
+    })();
+
   </script>
 </body>
 </html>
