@@ -8,13 +8,13 @@
 </head>
 <body>
   <h1>Scan</h1>
-  <video id="video-canvas"></video>
+  <video id="video-canvas" autoplay="true"></video>
   <script type="module">
     import ky from 'https://cdn.jsdelivr.net/npm/ky@latest/index.js';
     import QrScanner from './qr-scanner.min.js';
 
-    const videoCanvas = document.getElementById('video-canvas');
-    const qrScanner = new QrScanner(videoCanvas, res => console.log('qr code: ', res));
+    const videoElement = document.getElementById('video-canvas');
+    const qrScanner = new QrScanner(videoElement, res => console.log('qr code: ', res));
 
     (async () => {
       const parsed = await ky('https://jsonplaceholder.typicode.com/todos/1').json();
@@ -23,6 +23,11 @@
       //=> 'delectus aut autem
     })();
 
+    if (navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({video: true})
+        .then(stream => videoElement.srcObject = stream)
+        .catch(err => console.log('stream-err: ', err));
+    }
   </script>
 </body>
 </html>
