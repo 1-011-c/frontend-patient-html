@@ -1,22 +1,99 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-	<meta http-equiv="Content-Security-Policy-Report-Only" content="default-src: 'unsafe-eval' 'unsafe-inline'">
+  <meta http-equiv="Content-Security-Policy-Report-Only" content="default-src: 'self' *.testbefund.de">
   <meta charset="utf-8">
   <title></title>
+  <link href="normalize.css" rel="stylesheet" />
+  <link href="bulma.min.css" rel="stylesheet" />
   <link href="style.css" rel="stylesheet" />
 </head>
 <body>
-  <h1 id="headline">Scan</h1>
-  <video id="video-canvas" autoplay="true"></video>
+  <div class="container">
+    <div class="notification is-warning is-light">
+      <button class="delete"></button>
+      Diese Seite ist ein <strong>nicht</strong> funktionaler Prototyp, der im Rahmen des <a href="https://wirvsvirushackathon.org">"Wir vs Virus"-Hackathons</a> erstellt wurde. Die dargestellten Informationen und Funktionen dienen ausschließlich Demonstrationszwecken!
+    </div>
+
+    <div class="box">
+      <section class="hero is-info">
+        <div class="hero-body">
+          <h1 class="title">Scannen Sie Ihren Test-QR-Code</h1>
+          <h2 class="subtitle">Zum scannen des Codes verwendet diese Seite Ihre Kamera, es werden aber <strong>keine</strong> Kamera-Daten ins Internet übertragen. Die Bildinformationen werden in Ihrem Browser ausgewertet - ausschließlich der ermittelte Code wird genutzt, um Ihr Testergebnis abzufragen!</h2>
+        </div>
+      </section>
+      <video id="video-canvas" autoplay="true"></video>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="buttons is-centered">
+      <button id="scan-button" class="button" disabled>Test-Code scannen</button>
+      <button id="cancel-button" class="button" disabled>Scanvorgang abbrechen</button>
+    </div>
+  </section>
+
+  <section class="hero is-light" id="test-hero">
+    <div class="hero-body">
+      <div class="container">
+        <p class="" id="test-id">Scannen Sie erst eine Test-ID.</p>
+        <p class="" id="test-state"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="buttons is-centered">
+      <button id="request-button" class="button" disabled>Test-Status abrufen</button>
+    </div>
+    <p>Bitte bewahren Sie Ruhe, es besteht kein Grund Klopapier zu hamstern.</p>
+  </section>
+
+  <footer class="footer">
+    <div>Der Quellcode dieses <a href="https://github.com/1-011-c/frontend-patient-html">Projektes</a> ist mit der <a href="http://opensource.org/licenses/mit-license.php">MIT-Lizenz</a> lizensiert.</div>
+    <div class="content">Diese Domain wird vorübergehend zu Demonstrationszwecken durch die <a href="https://mindkeeper.solutions">mindkeeper solutions GmbH</a> zur Verfügung gestellt. Mit Aufruf dieser Webseite werden Ihre öffentliche IP-Adresse sowie sonstige Informationen die Ihr Client überträgt gemäß den <a href="https://help.github.com/en/github/site-policy/github-privacy-statement#github-pages">Richtlinien von GitHub</a> verarbeitet. Abfragen die der Auflösung des eingescannten QR-Code dienen werden durch die Amazon AWS verarbeitet und unterliegen deren <a href="https://aws.amazon.com/de/privacy/">Datenschutzbestimmungen</a>. Diese Webseite erhebt keine persönlichen Daten, nutzt kein Tracking.</div>
+    </div>
+  </footer>
+
   <script type="module">
     import ky from 'https://cdn.jsdelivr.net/npm/ky@latest/index.js';
     import QrScanner from './qr-scanner.min.js';
 
+    const apiEndpoint = "https://blffmaku9b.execute-api.eu-central-1.amazonaws.com/Prod";
+
     const videoElement = document.getElementById('video-canvas');
     const headlineElement = document.getElementById('headline');
-    var scans = 0;
+    const scanButton = document.getElementById('scan-button');
+    const cancelButton = document.getElementById('cancel-button');
+    const requestButton = document.getElementById('request-button');
+    const testStateContainer = document.getElementById('test-state');
+    const testIdContainer = document.getElementById('test-id');
+    const testHeroContainer = document.getElementById('test-hero');
 
+    const pathValidator = /^\/corona-test-case\/([0-9a-z-]+)$/m;
+    const scanner = new QrScanner(videoElement, res => {
+      const trimmedRes = res.trim();
+      const match = trimmedRes.match(pathValidator);
+
+      if (match !== null) {
+        const id = match[1];
+
+        if (testIdContainer.innerText === id) {
+          return;
+        }
+        testIdContainer.innerText = match[1];
+
+        testStateContainer.innerText = 'Status noch nicht abgerufen.';
+
+        testHeroContainer.setAttribute('class', 'hero is-light');
+
+        cancelButton.setAttribute('disabled', 'disabled');
+        scanButton.removeAttribute('disabled');
+        requestButton.removeAttribute('disabled');
+      } else {
+        console.log('mismatch:', trimmedRes);
+      }
+    });
     const escapeHtml = unsafe => {
         return unsafe
              .replace(/&/g, "&amp;")
@@ -24,24 +101,74 @@
              .replace(/>/g, "&gt;")
              .replace(/"/g, "&quot;")
              .replace(/'/g, "&#039;");
-     }
+    }
+
+    scanButton.addEventListener('click', event => {
+      if (navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({video: true})
+          .then(stream => {
+            videoElement.srcObject = stream;
+            scanner.start();
+
+            scanButton.setAttribute('disabled', 'disabled');
+            cancelButton.removeAttribute('disabled');
+          })
+          .catch(err => console.log('stream-err:', err));
+      }
+    });
+
+    cancelButton.addEventListener('click', event => {
+      scanner.stop();
+      videoElement.srcObject = undefined;
+
+      cancelButton.setAttribute('disabled', 'disabled');
+      scanButton.removeAttribute('disabled');
+    });
+
+    requestButton.addEventListener('click', event => {
+      const testId = testIdContainer.innerText;
+
+      if (!testId) {
+        return;
+      }
+
+      ky.get(`${apiEndpoint}/corona-test-case/${testId}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new HTTPError('Fetch error:', response.statusText);
+          }
+
+          const parsed = response.json();
+          switch (parsed.infected) {
+            case 'IN_PROGRESS':
+              testStateContainer.innerText = 'Ihr Test ist in Bearbeitung, bitte haben Sie Geduld.';
+              testHeroContainer.setAttribute('class', 'hero is-info');
+              break;
+            case 'POSITIVE':
+              testStateContainer.innerText = 'Der Befund für Ihren Test ist positiv.';
+              testHeroContainer.setAttribute('class', 'hero is-warning');
+              break;
+            case 'NEGATIVE':
+              testStateContainer.innerText = 'Der Befund für Ihren Test ist negativ.';
+              testHeroContainer.setAttribute('class', 'hero is-success');
+              break;
+            default:
+              testStateContainer.innerText = 'Ihr Test konnte nicht geprüft werden.';
+              testHeroContainer.setAttribute('class', 'hero is-light');
+              break;
+          }
+        })
+        .catch(err => console.log('error:', err));
+    });
 
     (async () => {
-      //const parsed = await ky('https://api.testbefund.de/corona-test-case').json();
+      const mediaDevices = await navigator.mediaDevices.enumerateDevices();
+      const hasVideoinput = mediaDevices.reduce((acc, curr) => acc || curr.kind === 'videoinput', false);
 
-      console.dir(parsed);
-      //=> 'delectus aut autem
+      if (hasVideoinput === true) {
+        scanButton.removeAttribute('disabled');
+      }
     })();
-
-    if (navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({video: true})
-        .then(stream => {
-          videoElement.srcObject = stream;
-          const scanner = new QrScanner(videoElement, res => headline.innerText = `Scan #${scans++}: ${escapeHtml(res)}`);
-          scanner.start();
-        })
-        .catch(err => console.log('stream-err: ', err));
-    }
   </script>
 </body>
 </html>
