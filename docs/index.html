@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
+	<meta http-equiv="Content-Security-Policy-Report-Only" content="default-src: 'unsafe-eval' 'unsafe-inline'">
   <meta charset="utf-8">
   <title></title>
   <link href="style.css" rel="stylesheet" />
-
 </head>
 <body>
   <h1 id="headline">Scan</h1>
@@ -27,9 +27,9 @@
      }
 
     (async () => {
-      const parsed = await ky('https://jsonplaceholder.typicode.com/todos/1').json();
+      //const parsed = await ky('https://api.testbefund.de/corona-test-case').json();
 
-      console.log(parsed.title);
+      console.dir(parsed);
       //=> 'delectus aut autem
     })();
 
