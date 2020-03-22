@@ -98,6 +98,7 @@ window.onload = () => {
       navigator.mediaDevices.getUserMedia({audio: false, video: {deviceId: videoinputs[nextVideoinput]}})
         .then(stream => {
           videoElement.srcObject = stream;
+          currentVideoinput = nextVideoinput;
         })
         .catch(err => {
           videoElement.srcObject = undefined;
