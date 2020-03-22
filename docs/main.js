@@ -32,7 +32,7 @@ window.onload = () => {
 
       testStateContainer.innerText = 'Status noch nicht abgerufen.';
 
-      testHeroContainer.setAttribute('class', 'hero is-light');
+      testHeroContainer.setAttribute('class', 'hero is-info');
 
       scanner.stop();
       videoElement.srcObject = undefined;
