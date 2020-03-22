@@ -1,4 +1,6 @@
-# frontend-patient-html
+![logo](logo.png)
+
+## frontend-patient-html
 Einfache HTML-Seite für Anwender ohne Zugriff auf native App.
 
 ## Voraussetzungen
