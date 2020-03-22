@@ -1,8 +1,12 @@
 import ky from 'https://cdn.jsdelivr.net/npm/ky@latest/index.js';
 import QrScanner from './qr-scanner.min.js';
 
+
 window.onload = () => {
   const apiEndpoint = "https://blffmaku9b.execute-api.eu-central-1.amazonaws.com/Prod";
+
+  const mvpWarningEndpointElementId = 'mvp-warning-popup';
+  const appStoreInfoPopupId = 'app-store-info-popup';
 
   const videoElement = document.getElementById('video-canvas');
   const headlineElement = document.getElementById('headline');
@@ -14,6 +18,10 @@ window.onload = () => {
   const testIdContainer = document.getElementById('test-id');
   const testHeroContainer = document.getElementById('test-hero');
   const mediaForbiddenTitle = document.getElementById('media-forbidden-title');
+  const removeMvpWarningButton = document.getElementById('remove-mvp-warning-button');
+  const removeAppStoreInfoButton = document.getElementById('remove-connected-app-info-button');
+  const openInAndroidButton = document.getElementById('open-in-android-appstore-button');
+  const openInIosButton = document.getElementById('open-in-ios-appstore-button');
 
   let videoinputs = [];
   let currentVideoinput = 0;
@@ -148,27 +156,65 @@ window.onload = () => {
           case 'IN_PROGRESS':
             testStateContainer.innerText = 'Ihr Test ist in Bearbeitung, bitte haben Sie Geduld.';
             testHeroContainer.setAttribute('class', 'hero is-info');
+            showPopup(appStoreInfoPopupId);
             hideAllBut('in-progress');
             break;
           case 'POSITIVE':
             testStateContainer.innerText = 'Der Befund für Ihren Test ist positiv.';
             testHeroContainer.setAttribute('class', 'hero is-warning');
+            showPopup(appStoreInfoPopupId);
             hideAllBut('positive');
             break;
           case 'NEGATIVE':
             testStateContainer.innerText = 'Der Befund für Ihren Test ist negativ.';
             testHeroContainer.setAttribute('class', 'hero is-success');
+            showPopup(appStoreInfoPopupId);
             hideAllBut('negative');
             break;
           default:
             testStateContainer.innerText = 'Ihr Test konnte nicht geprüft werden.';
             testHeroContainer.setAttribute('class', 'hero is-light');
+            showPopup(appStoreInfoPopupId);
             hideAllBut('default');
             break;
         }
       })
       .catch(err => console.log('error:', err));
   });
+
+
+  function hidePopup(popupId) {
+    let element = document.getElementById(popupId);
+    element.setAttribute("hidden", "");
+  }
+
+  function showPopup(popupId) {
+    let element = document.getElementById(popupId);
+    element.removeAttribute("hidden");
+  }
+
+  function removePopupListener(popupId) {
+    return () => {
+      hidePopup(popupId);
+      window.localStorage.setItem("mvp-warning-visible", "false");
+    }
+  }
+
+  // Event listeners to hide popups
+  removeMvpWarningButton.addEventListener("click", removePopupListener(mvpWarningEndpointElementId));
+  removeAppStoreInfoButton.addEventListener("click", removePopupListener(appStoreInfoPopupId));
+
+  // Remove the popups permanently.
+  openInAndroidButton.addEventListener("click", removePopupListener(appStoreInfoPopupId));
+  openInIosButton.addEventListener("click", removePopupListener(appStoreInfoPopupId));
+
+  // Upon page load, check if we need to remove the popup again
+  let visibleValue = window.localStorage.getItem("mvp-warning-visible");
+  if (visibleValue === "false") {
+    hidePopup(mvpWarningEndpointElementId);
+  }
+
+
 
   (async () => {
     const mediaDevices = await navigator.mediaDevices.enumerateDevices();

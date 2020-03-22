@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npm i && cp node_modules/qr-scanner/*.min.js docs/ && cp node_modules/bulma/css/bulma.min.css docs/ && cp node_modules/normalize.css/normalize.css docs/ && browser-sync start --cors --h localhost --https -s docs -f docs"
+    "start": "npm i && cp node_modules/qr-scanner/*.min.js docs/ && cp node_modules/bulma/css/bulma.min.css docs/ && cp node_modules/normalize.css/normalize.css docs/ && browser-sync start --cors --h localhost --https -s docs -f docs",
+    "start-win": "powershell -Command \"npm i ; cp node_modules/qr-scanner/*.min.js docs/; cp node_modules/bulma/css/bulma.min.css docs/; cp node_modules/normalize.css/normalize.css docs/ ; browser-sync start --cors --h localhost --https -s docs -f docs\""
   },
   "repository": {
     "type": "git",
