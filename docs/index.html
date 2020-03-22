@@ -23,13 +23,10 @@
         </div>
       </section>
       <video id="video-canvas" autoplay="true"></video>
-    </div>
-  </div>
-
   <section class="section">
     <div class="buttons is-centered">
-      <button id="scan-button" class="button" disabled>Test-Code scannen</button>
-      <button id="cancel-button" class="button" disabled>Scanvorgang abbrechen</button>
+      <button id="scan-button" class="button is-success" disabled>Test-Code scannen</button>
+      <button id="cancel-button" class="button is-danger" disabled>Scanvorgang abbrechen</button>
     </div>
   </section>
 
@@ -44,10 +41,13 @@
 
   <section class="section">
     <div class="buttons is-centered">
-      <button id="request-button" class="button" disabled>Test-Status abrufen</button>
+      <button id="request-button" class="button is-info is-fullwidth" disabled>Test-Status abrufen</button>
     </div>
     <p>Bitte bewahren Sie Ruhe, es besteht kein Grund Klopapier zu hamstern.</p>
   </section>
+    </div>
+  </div>
+
 
   <footer class="footer">
     <div>Der Quellcode dieses <a href="https://github.com/1-011-c/frontend-patient-html">Projektes</a> ist mit der <a href="http://opensource.org/licenses/mit-license.php">MIT-Lizenz</a> lizensiert.</div>
@@ -70,16 +70,6 @@
     const testIdContainer = document.getElementById('test-id');
     const testHeroContainer = document.getElementById('test-hero');
 
-    const api = ky.extend({
-      hooks: {
-        beforeRequest: [
-          request => {
-            request.headers.set('Accept', 'application/json')
-          }
-        ]
-      }
-    });
-
     const pathValidator = /^\/corona-test-case\/([0-9a-z-]+)$/m;
     const scanner = new QrScanner(videoElement, res => {
       const trimmedRes = res.trim();
@@ -96,6 +86,9 @@
         testStateContainer.innerText = 'Status noch nicht abgerufen.';
 
         testHeroContainer.setAttribute('class', 'hero is-light');
+
+        scanner.stop();
+        videoElement.srcObject = undefined;
 
         cancelButton.setAttribute('disabled', 'disabled');
         scanButton.removeAttribute('disabled');
@@ -142,13 +135,16 @@
         return;
       }
 
-      api.get(`${apiEndpoint}/corona-test-case/${testId}`)
+      ky.get(`${apiEndpoint}/corona-test-case/${testId}`)
         .then(response => {
           if (!response.ok) {
             throw new HTTPError('Fetch error:', response.statusText);
           }
 
-          const parsed = response.json();
+          return response.json();
+        })
+        .then(parsed => {
+          console.dir(parsed);
           switch (parsed.infected) {
             case 'IN_PROGRESS':
               testStateContainer.innerText = 'Ihr Test ist in Bearbeitung, bitte haben Sie Geduld.';
