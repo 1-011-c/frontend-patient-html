@@ -1,13 +1,14 @@
 import ky from 'https://cdn.jsdelivr.net/npm/ky@latest/index.js';
 import QrScanner from './qr-scanner.min.js';
 
-
+// Hook into the onload-event of the window
 window.onload = () => {
   const apiEndpoint = "https://blffmaku9b.execute-api.eu-central-1.amazonaws.com/Prod";
 
   const mvpWarningEndpointElementId = 'mvp-warning-popup';
   const appStoreInfoPopupId = 'app-store-info-popup';
 
+  // provide all elements as handy constants
   const videoElement = document.getElementById('video-canvas');
   const headlineElement = document.getElementById('headline');
   const scanButton = document.getElementById('scan-button');
@@ -26,13 +27,16 @@ window.onload = () => {
   let videoinputs = [];
   let currentVideoinput = 0;
   const pathValidator = /^\/corona-test-case\/([0-9a-z-]+)$/m;
+  // instantiate the qr-scanner with a "success"-callback, called whenever a qr-code was detected
   const scanner = new QrScanner(videoElement, res => {
     const trimmedRes = res.trim();
     const match = trimmedRes.match(pathValidator);
 
+    // if the test-case-path is valid
     if (match !== null) {
       const id = match[1];
 
+      // load the id into the testIdContainer
       if (testIdContainer.innerText === id) {
         return;
       }
@@ -42,9 +46,11 @@ window.onload = () => {
 
       testHeroContainer.setAttribute('class', 'hero is-light');
 
+      // stop scanner and release video-canvas
       scanner.stop();
       videoElement.srcObject = undefined;
 
+      // manage button-state
       cancelButton.setAttribute('disabled', 'disabled');
       flipButton.setAttribute('disabled', 'disabled');
       scanButton.removeAttribute('disabled');
@@ -62,13 +68,17 @@ window.onload = () => {
            .replace(/'/g, "&#039;");
   }
 
+  // whenever user clicks scan
   scanButton.addEventListener('click', event => {
     if (navigator.mediaDevices.getUserMedia) {
+      // start rear-video device
       navigator.mediaDevices.getUserMedia({audio: false, video: {facingMode: "environment"}})
         .then(stream => {
+          // attach stream and start scanning
           videoElement.srcObject = stream;
           scanner.start();
 
+          // manage button states
           scanButton.setAttribute('disabled', 'disabled');
           if (videoinputs.length > 1) {
             flipButton.removeAttribute('disabled');
@@ -76,22 +86,28 @@ window.onload = () => {
           cancelButton.removeAttribute('disabled');
           mediaForbiddenTitle.setAttribute('hidden', 'true');
         })
-        .catch(err => {
+        .catch(err => { // in the case of an error
+          // release stream and stop scanner
           videoElement.srcObject = undefined;
           scanner.stop();
 
+          // manage button states
           cancelButton.setAttribute('disabled', 'disabled');
           flipButton.setAttribute('disabled', 'disabled');
           scanButton.removeAttribute('disabled');
+          // show forbidden-message
           mediaForbiddenTitle.removeAttribute('hidden');
         });
     }
   });
 
+  // if the user clicks cancel scanning
   cancelButton.addEventListener('click', event => {
+    // release stream and scanner
     scanner.stop();
     videoElement.srcObject = undefined;
 
+    // manage button state
     cancelButton.setAttribute('disabled', 'disabled');
     scanButton.removeAttribute('disabled');
     if (videoinputs.length > 1) {
@@ -99,10 +115,12 @@ window.onload = () => {
     }
   });
 
+  // if teh user clicks flipcamera
   flipButton.addEventListener('click', event => {
-    if (videoinputs.length > 1) {
+    if (videoinputs.length > 1) { // and the device has more than one videoinput-device
       const nextVideoinput = (currentVideoinput + 1) % videoinputs.length;
 
+      // switch the nect videoinput-device
       navigator.mediaDevices.getUserMedia({audio: false, video: {deviceId: videoinputs[nextVideoinput]}})
         .then(stream => {
           videoElement.srcObject = stream;
@@ -120,6 +138,7 @@ window.onload = () => {
     }
   });
 
+  // id the user clicks request
   requestButton.addEventListener('click', event => {
     const testId = testIdContainer.innerText;
 
@@ -127,6 +146,7 @@ window.onload = () => {
       return;
     }
 
+    // issue a get request to the server-backend
     ky.get(`${apiEndpoint}/corona-test-case/${testId}`)
       .then(response => {
         if (!response.ok) {
@@ -135,7 +155,7 @@ window.onload = () => {
 
         return response.json();
       })
-      .then(parsed => {
+      .then(parsed => { // when we have some json
         const contentDefault = document.getElementById('content-default');
         const contentPositive = document.getElementById('content-positive');
         const contentNegative = document.getElementById('content-negative');
@@ -152,6 +172,7 @@ window.onload = () => {
           }
         };
 
+        // detect the infection-state and manage the result by hiding all mismatching content-containers
         switch (parsed.infected) {
           case 'IN_PROGRESS':
             testStateContainer.innerText = 'Ihr Test ist in Bearbeitung, bitte haben Sie Geduld.';
@@ -183,9 +204,10 @@ window.onload = () => {
   });
 
 
+  // allow people to hide the warning 
   function hidePopup(popupId) {
     let element = document.getElementById(popupId);
-    element.setAttribute("hidden", "");
+    element.setAttribute("hidden", "true");
   }
 
   function showPopup(popupId) {
@@ -214,12 +236,14 @@ window.onload = () => {
     hidePopup(mvpWarningEndpointElementId);
   }
 
-
-
+  // After onload
   (async () => {
+    // request all mediadevices
     const mediaDevices = await navigator.mediaDevices.enumerateDevices();
+    // keep only videoinput devices
     videoinputs = mediaDevices.filter(curr => curr.kind === 'videoinput');
 
+    // enable scan-button if videoinput devices available
     if (videoinputs.length > 0) {
       scanButton.removeAttribute('disabled');
     }
