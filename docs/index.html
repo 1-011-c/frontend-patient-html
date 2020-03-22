@@ -12,8 +12,8 @@
 </head>
 <body>
   <div class="container">
-    <div class="notification is-warning is-light">
-      <button class="delete"></button>
+    <div class="notification is-warning is-light" id="mvp-warning-popup">
+      <button class="delete" id="remove-mvp-warning-button"></button>
       Diese Seite ist ein <strong>nicht</strong> funktionaler Prototyp, der im Rahmen des <a href="https://wirvsvirushackathon.org">"Wir vs Virus"-Hackathons</a> erstellt wurde. Die dargestellten Informationen und Funktionen dienen ausschließlich Demonstrationszwecken!
     </div>
 
@@ -35,6 +35,15 @@
           <button id="cancel-button" class="button is-danger" disabled><span class="icon"><i class="mdi mdi-18px mdi-video-off-outline"></i></span><span>Scanvorgang abbrechen</span></button>
         </div>
       </section>
+
+      <div class="notification is-info" id="app-store-info-popup" hidden>
+          <button class="delete" id="remove-connected-app-info-button"></button>
+          Hey! Wir empfehlen dir, für den Fall, dass dein Test positiv ausfällt, schon einmal deine Kontaktdaten in APPNAME zu hinterlegen.<br/>
+          <div class="buttons is-centered">
+            <button id="open-in-android-appstore-button" class="button is-success"><span class="icon"><i class="mdi mdi-18px mdi-apps"></i></span><span>Im Android App Store Öffnen</span></button>
+            <button id="open-in-ios-appstore-button" class="button is-success"><span class="icon"><i class="mdi mdi-18px mdi-apps"></i></span><span>Im IOS App Store Öffnen</span></button>
+          </div>
+      </div>
 
       <section class="hero is-light" id="test-hero">
         <div class="hero-body">

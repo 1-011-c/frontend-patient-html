@@ -1,3 +1,12 @@
 video {
   width: 50%;
 }
+
+#app-store-info-popup {
+  position: fixed;
+  bottom: 0;
+  right: 20px;
+  left: 20px;
+  margin-bottom: 4px;
+  z-index: 20;
+}
