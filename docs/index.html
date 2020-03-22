@@ -3,10 +3,12 @@
 <head>
   <meta http-equiv="Content-Security-Policy-Report-Only" content="default-src: 'self' *.testbefund.de">
   <meta charset="utf-8">
-  <title></title>
+  <title>mein.testbefund.de</title>
+  <link href="css/materialdesignicons.min.css" rel="stylesheet" />
   <link href="normalize.css" rel="stylesheet" />
   <link href="bulma.min.css" rel="stylesheet" />
   <link href="style.css" rel="stylesheet" />
+  
 </head>
 <body>
   <div class="container">
@@ -23,28 +25,35 @@
         </div>
       </section>
       <video id="video-canvas" autoplay="true"></video>
-  <section class="section">
-    <div class="buttons is-centered">
-      <button id="scan-button" class="button is-success" disabled>Test-Code scannen</button>
-      <button id="cancel-button" class="button is-danger" disabled>Scanvorgang abbrechen</button>
-    </div>
-  </section>
+      <section class="section">
+        <div class="container" id="media-forbidden-title" hidden="true">
+          <h3 class="has-text-centered has-text-danger"><span class="icon"><i class="mdi mdi-18px mdi-alert-octagon"></i></span> Gewähren Sie bitte Zugriff auf Ihre Kamera, damit der Test-Code eingescannt werden kann.</h3>
+        </div>
+        <div class="buttons is-centered">
+          <button id="scan-button" class="button is-success" disabled><span class="icon"><i class="mdi mdi-18px mdi-video-outline"></i></span><span>Test-Code scannen</span></button>
+          <button id="flip-button" class="button is-info is-outlined" disabled><span class="icon"><i class="mdi mdi-18px mdi-camera-switch"></i></span><span>Kamera wechseln</span></button>
+          <button id="cancel-button" class="button is-danger" disabled><span class="icon"><i class="mdi mdi-18px mdi-video-off-outline"></i></span><span>Scanvorgang abbrechen</span></button>
+        </div>
+      </section>
 
-  <section class="hero is-light" id="test-hero">
-    <div class="hero-body">
-      <div class="container">
-        <p class="" id="test-id">Scannen Sie erst eine Test-ID.</p>
-        <p class="" id="test-state"></p>
-      </div>
-    </div>
-  </section>
+      <section class="hero is-light" id="test-hero">
+        <div class="hero-body">
+          <div class="container">
+            <p class="has-text-centered" id="test-id">Scannen Sie erst eine Test-ID.</p>
+            <p class="has-text-centered" id="test-state"></p>
+          </div>
+        </div>
+      </section>
 
-  <section class="section">
-    <div class="buttons is-centered">
-      <button id="request-button" class="button is-info is-fullwidth" disabled>Test-Status abrufen</button>
-    </div>
-    <p>Bitte bewahren Sie Ruhe, es besteht kein Grund Klopapier zu hamstern.</p>
-  </section>
+      <section class="section">
+        <div class="buttons is-centered">
+          <button id="request-button" class="button is-info is-fullwidth" disabled><span class="icon"><i class="mdi mdi-cloud-question mdi-18px"></i></span><span>Test-Status abrufen</span></button>
+        </div>
+        <p id="content-default" hidden="true">Bitte bewahren Sie Ruhe, es liegen noch keine weiterführenden Informationen zu Ihrem Abstrich vor.</p>
+        <p id="content-positive" hidden="true">Bitte bewahren Sie Ruhe, Ihr <a href="https://tools.rki.de/PLZTool/?q=10318">zuständiges Gesundheitsamt</a> wird Kontakt mit Ihnen aufnehmen. Bitte begeben Sie sich selbst in Quarantäne und nehmen Sie Kontakt mit Ihrem Arzt auf.</p>
+        <p id="content-negative" hidden="true">Bitte tragen Sie weiterhin Sorge dafür, dass Sie gesund bleiben und nutzen Sie die <a href="https://www.zusammengegencorona.de/informieren/praevention">Informationsangebote zu Präventionsmaßnahmen</a>.</p>
+        <p id="content-in-progress" hidden="true">Bitte bewahren Sie Ruhe, ihr Abstrich ist derzeit in Bearbeitung.</p>
+      </section>
     </div>
   </div>
 
@@ -54,127 +63,8 @@
     <div class="content">Diese Domain wird vorübergehend zu Demonstrationszwecken durch die <a href="https://mindkeeper.solutions">mindkeeper solutions GmbH</a> zur Verfügung gestellt. Mit Aufruf dieser Webseite werden Ihre öffentliche IP-Adresse sowie sonstige Informationen die Ihr Client überträgt gemäß den <a href="https://help.github.com/en/github/site-policy/github-privacy-statement#github-pages">Richtlinien von GitHub</a> verarbeitet. Abfragen die der Auflösung des eingescannten QR-Code dienen werden durch die Amazon AWS verarbeitet und unterliegen deren <a href="https://aws.amazon.com/de/privacy/">Datenschutzbestimmungen</a>. Diese Webseite erhebt keine persönlichen Daten und nutzt kein Tracking.</div>
     </div>
   </footer>
+  <script src="/main.js" type="module">
 
-  <script type="module">
-    import ky from 'https://cdn.jsdelivr.net/npm/ky@latest/index.js';
-    import QrScanner from './qr-scanner.min.js';
-
-    const apiEndpoint = "https://blffmaku9b.execute-api.eu-central-1.amazonaws.com/Prod";
-
-    const videoElement = document.getElementById('video-canvas');
-    const headlineElement = document.getElementById('headline');
-    const scanButton = document.getElementById('scan-button');
-    const cancelButton = document.getElementById('cancel-button');
-    const requestButton = document.getElementById('request-button');
-    const testStateContainer = document.getElementById('test-state');
-    const testIdContainer = document.getElementById('test-id');
-    const testHeroContainer = document.getElementById('test-hero');
-
-    const pathValidator = /^\/corona-test-case\/([0-9a-z-]+)$/m;
-    const scanner = new QrScanner(videoElement, res => {
-      const trimmedRes = res.trim();
-      const match = trimmedRes.match(pathValidator);
-
-      if (match !== null) {
-        const id = match[1];
-
-        if (testIdContainer.innerText === id) {
-          return;
-        }
-        testIdContainer.innerText = match[1];
-
-        testStateContainer.innerText = 'Status noch nicht abgerufen.';
-
-        testHeroContainer.setAttribute('class', 'hero is-light');
-
-        scanner.stop();
-        videoElement.srcObject = undefined;
-
-        cancelButton.setAttribute('disabled', 'disabled');
-        scanButton.removeAttribute('disabled');
-        requestButton.removeAttribute('disabled');
-      } else {
-        console.log('mismatch:', trimmedRes);
-      }
-    });
-    const escapeHtml = unsafe => {
-        return unsafe
-             .replace(/&/g, "&amp;")
-             .replace(/</g, "&lt;")
-             .replace(/>/g, "&gt;")
-             .replace(/"/g, "&quot;")
-             .replace(/'/g, "&#039;");
-    }
-
-    scanButton.addEventListener('click', event => {
-      if (navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({video: true})
-          .then(stream => {
-            videoElement.srcObject = stream;
-            scanner.start();
-
-            scanButton.setAttribute('disabled', 'disabled');
-            cancelButton.removeAttribute('disabled');
-          })
-          .catch(err => console.log('stream-err:', err));
-      }
-    });
-
-    cancelButton.addEventListener('click', event => {
-      scanner.stop();
-      videoElement.srcObject = undefined;
-
-      cancelButton.setAttribute('disabled', 'disabled');
-      scanButton.removeAttribute('disabled');
-    });
-
-    requestButton.addEventListener('click', event => {
-      const testId = testIdContainer.innerText;
-
-      if (!testId) {
-        return;
-      }
-
-      ky.get(`${apiEndpoint}/corona-test-case/${testId}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new HTTPError('Fetch error:', response.statusText);
-          }
-
-          return response.json();
-        })
-        .then(parsed => {
-          console.dir(parsed);
-          switch (parsed.infected) {
-            case 'IN_PROGRESS':
-              testStateContainer.innerText = 'Ihr Test ist in Bearbeitung, bitte haben Sie Geduld.';
-              testHeroContainer.setAttribute('class', 'hero is-info');
-              break;
-            case 'POSITIVE':
-              testStateContainer.innerText = 'Der Befund für Ihren Test ist positiv.';
-              testHeroContainer.setAttribute('class', 'hero is-warning');
-              break;
-            case 'NEGATIVE':
-              testStateContainer.innerText = 'Der Befund für Ihren Test ist negativ.';
-              testHeroContainer.setAttribute('class', 'hero is-success');
-              break;
-            default:
-              testStateContainer.innerText = 'Ihr Test konnte nicht geprüft werden.';
-              testHeroContainer.setAttribute('class', 'hero is-light');
-              break;
-          }
-        })
-        .catch(err => console.log('error:', err));
-    });
-
-    (async () => {
-      const mediaDevices = await navigator.mediaDevices.enumerateDevices();
-      const hasVideoinput = mediaDevices.reduce((acc, curr) => acc || curr.kind === 'videoinput', false);
-
-      if (hasVideoinput === true) {
-        scanButton.removeAttribute('disabled');
-      }
-    })();
   </script>
 </body>
 </html>
